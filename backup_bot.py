@@ -78,6 +78,21 @@ class GenericBot(sleekxmpp.ClientXMPP):
 
 class BackupBot(GenericBot):
 
+    def __init__(self, jid, password):
+        GenericBot.__init__(self, jid, password)
+        self.loadConfigSettings()
+
+    def loadConfigSettings(self):
+        config = ConfigParser.RawConfigParser()
+        config.read("innoxmpp.ini")
+
+        self.logdir = config.get("BackupBot","logdir")
+        self.logfiles = config.get("BackupBot","logfiles").split()
+
+        self.logger.debug("Tracking backup logging dir %s" % self.logdir)
+        self.logger.debug("Tracking log files %s" % self.logfiles)
+
+
     def handleStatusCommand(self, _arguments):
         """
         Handler for 'status' command
