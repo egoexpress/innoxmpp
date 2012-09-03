@@ -11,6 +11,7 @@ import getpass
 import logging
 import sleekxmpp
 import ConfigParser
+import ssl
 
 class GenericBot(sleekxmpp.ClientXMPP):
     """
@@ -21,6 +22,9 @@ class GenericBot(sleekxmpp.ClientXMPP):
         """
         Designated initializer
         """
+        # get current logger
+        self.logger = logging.getLogger()
+
         # get paramters from config file
         self.config = ConfigParser.RawConfigParser()
         self.config.read("config/innoxmpp.ini")
@@ -28,6 +32,17 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # get jid and password for concrete bot class
         jid = self.config.get(self.__class__.__name__,"jid")
         password = self.config.get(self.__class__.__name__,"password")
+
+        # add option to handle OpenFire servers as the manage SSL
+        # a bit differently than others
+        try:
+            openFire = self.config.get(self.__class__.__name__,"openfire")
+        except ConfigParser.NoOptionError, e:
+            openFire = "0"
+
+        if openFire != "0":
+            self.logger.debug("Running bot in OpenFire mode")
+            self.ssl_version = ssl.PROTOCOL_SSLv3
 
         # ask for user data interactively if not found in config file
         if jid is None:
@@ -45,9 +60,6 @@ class GenericBot(sleekxmpp.ClientXMPP):
 
         # handle received message
         self.add_event_handler("message", self.handleMessage)
-
-        # get current logger
-        self.logger = logging.getLogger()
 
         # TODO: check if we need any of these
         #self.register_plugin('xep_0030') # Service Discovery
