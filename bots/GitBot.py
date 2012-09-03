@@ -35,7 +35,9 @@ class GitBot(GenericBot):
         Handle the 'git pull' command
         """
         if len(_arguments) == 0:
-            self.printDebugMessage(_sender, "No repository name for 'pull' provided.")
+            # no arguments provided, send help
+            self.sendMessage(_sender,"Usage: pull <directory>\n\nPull a directory from its origin")
+            self.logger.debug("No repository name for 'pull' provided.")
         else:
             repository = _arguments[0]
             self.printDebugMessage(_sender, "Trying to pull repository '%s'" % repository)
@@ -49,9 +51,10 @@ class GitBot(GenericBot):
             if not os.path.exists(os.path.join(commandPath,".git")):
                 self.printDebugMessage(_sender, "'%s' is no GIT repository" % commandPath)
 
-            # TODO: doesn't work yet
-            command = "cd %s && git pull" % commandPath
-            subprocess.call(command)
+            # TODO: works for now, but now I need to grep stdout/stderr and send it back to
+            # the sender
+            os.chdir(commandPath)
+            subprocess.call("git pull", shell=True)
 
 
 
