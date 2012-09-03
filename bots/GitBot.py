@@ -1,64 +1,60 @@
-from GenericBot import GenericBot
+# -*- coding: utf-8 -*-
 
-import ConfigParser
-import logging
+"""
+    GitBot - a XMPP worker bot to perform git-related commands
+    part of the InnoXMPP framework
+    Copyright (C) 2012 Bjoern Stierand
+"""
+
+from GenericBot import GenericBot
+from urlparse import urlparse
+import subprocess
+import os
 
 class GitBot(GenericBot):
+    """
+    GitBot - the git-related bot
+    """
 
-    def __init__(self, jid, password):
-        GenericBot.__init__(self, jid, password)
+    def __init__(self):
+        """
+        Designated initializer
+        """
+        super(GitBot,self).__init__()
         self.loadConfigSettings()
 
     def loadConfigSettings(self):
-        config = ConfigParser.RawConfigParser()
-        config.read("config/innoxmpp.ini")
-
-        self.logdir = config.get("BackupBot","logdir")
-        self.logfiles = config.get("BackupBot","logfiles").split()
-
-        self.logger.debug("Tracking backup logging dir %s" % self.logdir)
-        self.logger.debug("Tracking log files %s" % self.logfiles)
-
-
-    def handleStatusCommand(self, _arguments):
         """
-        Handler for 'status' command
+        Load config settings from file
         """
-        self.logger.debug("Calling the status command")
-        self.logger.debug(_arguments)
+        self.gitdir = self.config.get("GitBot","gitdir")
+        self.githubuser = self.config.get("GitBot","githubuser")
 
-            # TODO
-            # write command to log file
+    def handlePullCommand(self, _sender, _arguments):
+        """
+        Handle the 'git pull' command
+        """
+        if len(_arguments) == 0:
+            self.printDebugMessage(_sender, "No repository name for 'pull' provided.")
+        else:
+            repository = _arguments[0]
+            self.printDebugMessage(_sender, "Trying to pull repository '%s'" % repository)
 
-if __name__ == '__main__':
+            commandPath = os.path.join(self.gitdir,repository)
 
-    # get paramters from config file
-    config = ConfigParser.RawConfigParser()
-    config.read("innoxmpp.ini")
+            if not os.path.exists(commandPath):
+                self.printDebugMessage(_sender, "Invalid directory name '%s'" % commandPath)
+                return
 
-    jid = config.get("InnoXMPP","jid")
-    password = config.get("InnoXMPP","password")
-    loglevel=logging.DEBUG
+            if not os.path.exists(os.path.join(commandPath,".git")):
+                self.printDebugMessage(_sender, "'%s' is no GIT repository" % commandPath)
 
-    if jid is None:
-        jid = raw_input("Username: ")
-    if password is None:
-        password = getpass.getpass("Password: ")
-
-    # Setup logging.
-    logging.basicConfig(level=loglevel,
-                        format='%(levelname)-8s %(message)s')
+            # TODO: doesn't work yet
+            command = "cd %s && git pull" % commandPath
+            subprocess.call(command)
 
 
-    xmpp = GitBot(jid, password)
-    xmpp.register_plugin('xep_0030') # Service Discovery
-    xmpp.register_plugin('xep_0004') # Data Forms
-    xmpp.register_plugin('xep_0060') # PubSub
-    xmpp.register_plugin('xep_0199') # XMPP Ping
 
-    # Connect to the XMPP server and start processing XMPP stanzas.
-    if xmpp.connect():
-        xmpp.process(block=True)
-        print("Done")
-    else:
-        print("Unable to connect.")
+
+
+

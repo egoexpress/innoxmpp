@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-    BackupBot - an XMPP bot to control the system backup performed by duplicity
+    git_bot - startup script for the XMPP bot to control the git infrastructure
     Copyright (C) 2012 Bjoern Stierand
 """
 
-from bots import BackupBot
+from bots import GitBot
 import sys
 import logging
 
@@ -23,6 +23,6 @@ loglevel=logging.DEBUG
 logging.basicConfig(level=loglevel,
                     format='%(levelname)-8s %(message)s')
 
-backupBot = BackupBot.BackupBot()
-backupBot.run()
+gitBot = GitBot.GitBot()
+gitBot.run()
 

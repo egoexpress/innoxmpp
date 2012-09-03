@@ -19,7 +19,7 @@ class BackupBot(GenericBot):
         self.logger.debug("Tracking log files %s" % self.logfiles)
 
 
-    def handleStatusCommand(self, _arguments):
+    def handleStatusCommand(self, _msg, _arguments):
         """
         Handler for 'status' command
         """
