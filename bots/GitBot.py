@@ -6,8 +6,7 @@
     Copyright (C) 2012 Bjoern Stierand
 """
 
-from GenericBot import GenericBot
-from urlparse import urlparse
+from bots.GenericBot import GenericBot
 import subprocess
 import os
 
@@ -54,7 +53,8 @@ class GitBot(GenericBot):
             # TODO: works for now, but now I need to grep stdout/stderr and send it back to
             # the sender
             os.chdir(commandPath)
-            subprocess.call("git pull", shell=True)
+            result = subprocess.check_output("git pull", shell=True, universal_newlines=True)
+            self.sendMessage(_sender, result)
 
 
 

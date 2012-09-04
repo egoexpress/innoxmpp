@@ -10,7 +10,7 @@
 import getpass
 import logging
 import sleekxmpp
-import ConfigParser
+import configparser
 import ssl
 
 class GenericBot(sleekxmpp.ClientXMPP):
@@ -18,15 +18,19 @@ class GenericBot(sleekxmpp.ClientXMPP):
     GenericBot - a generic bot class (skeleton for the worker bots)
     """
 
-    def __init__(self):
+    def __init__(self, _loglevel=logging.DEBUG):
         """
         Designated initializer
         """
+        # set loglevel
+        logging.basicConfig(level=_loglevel,
+                            format='%(levelname)-8s %(message)s')
+
         # get current logger
         self.logger = logging.getLogger()
 
         # get paramters from config file
-        self.config = ConfigParser.RawConfigParser()
+        self.config = configparser.RawConfigParser()
         self.config.read("config/innoxmpp.ini")
 
         # get jid and password for concrete bot class
@@ -37,7 +41,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # a bit differently than others
         try:
             openFire = self.config.get(self.__class__.__name__,"openfire")
-        except ConfigParser.NoOptionError, e:
+        except ConfigParser.NoOptionError as e:
             openFire = "0"
 
         if openFire != "0":
@@ -77,10 +81,10 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # or send messages (ejabberd doesn't care)
         try: 
             self.get_roster()
-        except IQTimeout, e:
+        except IQTimeout as e:
             self.logger.info("Timeout while getting roster")
             # TODO: handle further timeout issues
-        except IQError, e:
+        except IQError as e:
             self.logger.info("Bad data received while retrieving roster")
             # TODO: handle further error issues
         
@@ -148,7 +152,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
             # try to get command handler using reflection
             try:
                 commandHandler = getattr(self, commandHandlerName)
-            except AttributeError, a:
+            except AttributeError as a:
                 self.logger.info("Invalid command called, no handler found: %s" % command)
                 commandHandler = None
 
