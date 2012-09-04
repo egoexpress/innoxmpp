@@ -39,7 +39,11 @@ class GitBot(GenericBot):
 
         # try to execute the command 
         try:
-            result = subprocess.check_output(_command, shell=True, universal_newlines=True)
+            result = subprocess.check_output(_command, 
+                        shell=True,                 # run in a subshell
+                        universal_newlines=True,    # always return text
+                        stderr=subprocess.STDOUT    # redirect stderr to stdout
+                        )
         except subprocess.CalledProcessError as e:
             result = "Error: %s" % e.output
             self.logger.debug("Error occurred: Code: %s, Text: %s" % (e.returncode, e.output))
