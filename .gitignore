@@ -23,6 +23,11 @@ pip-log.txt
 #Translations
 *.mo
 
-#Mr Developer
+# Mr Developer
 .mr.developer.cfg
+
+# own config files
 innoxmpp.ini
+
+# editors
+*.swp
