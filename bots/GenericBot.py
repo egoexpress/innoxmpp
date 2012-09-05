@@ -54,7 +54,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
         if password is None:
             password = getpass.getpass("Password: ")
 
-        # setup XMPP client (super class fo GenericBot)
+        # setup XMPP client (super class of GenericBot)
         super(GenericBot, self).__init__(jid, password)
 
         # setup callbacks
@@ -75,10 +75,12 @@ class GenericBot(sleekxmpp.ClientXMPP):
         """
         Process the start of the XMPP session
         """
+        # send presence to server (required by spec)
         self.send_presence()
+
         # although we don't necessarily need to get the roster
         # the spec forces us to get it, otherwise some servers may not deliver
-        # or send messages (ejabberd doesn't care)
+        # or send messages to us (ejabberd doesn't care)
         try: 
             self.get_roster()
         except IQTimeout as e:
@@ -87,7 +89,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
         except IQError as e:
             self.logger.info("Bad data received while retrieving roster")
             # TODO: handle further error issues
-        
+
         # TODO: roster data is saved in self.roster/self.client_roster
         # maybe use this data as base for push messages
 
@@ -135,12 +137,12 @@ class GenericBot(sleekxmpp.ClientXMPP):
             self.logger.debug('MESSAGE BODY: %s', messageBody)
 
             # get command and arguments from message
-            messageParts = messageBody.split()                
+            messageParts = messageBody.split()
             command = messageParts[0]
 
             sender = _msg['from']
             self.logger.debug('MESSAGE FROM: %s' % sender)
-            
+
             arguments = []
             if len(messageParts) > 0:
                 arguments = messageParts[1:]
