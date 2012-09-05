@@ -41,7 +41,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # a bit differently than others
         try:
             openFire = self.config.get(self.__class__.__name__,"openfire")
-        except ConfigParser.NoOptionError as e:
+        except configparser.NoOptionError as e:
             openFire = "0"
 
         if openFire != "0":
