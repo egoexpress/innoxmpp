@@ -27,6 +27,6 @@ of SleekXMPP (python3-sleekxmpp: 1.0~beta5-2) throws an error when starting a bo
 
 Using the latest version from the (cloned) [Git repository](https://github.com/egoexpress/SleekXMPP) didn't show this behaviour.
 
-**Getting the code:***
+**Getting the code:**
 
 The code of this project is available at GitHub at <https://github.com/egoexpress/innoxmpp>
