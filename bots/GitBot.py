@@ -7,7 +7,6 @@
 """
 
 from bots.GenericBot import GenericBot
-import subprocess
 import os
 
 class GitBot(GenericBot):
@@ -29,25 +28,77 @@ class GitBot(GenericBot):
         self.gitdir = self.config.get("GitBot","gitdir")
         self.githubuser = self.config.get("GitBot","githubuser")
 
-    def executeShellCommand(self, _command,  _targetDir=None):
+    def sanitizeArguments(self, _sender, _textArgument):
         """
-        Execute command on the shell using subprocess
+        Sanitize input, reject if it contains suspicious characters
         """
-        # change to target dir if path was given
-        if _targetDir != None:
-            os.chdir(_targetDir)
 
-        # try to execute the command 
-        try:
-            result = subprocess.check_output(_command, 
-                        shell=True,                 # run in a subshell
-                        universal_newlines=True,    # always return text
-                        stderr=subprocess.STDOUT    # redirect stderr to stdout
-                        )
-        except subprocess.CalledProcessError as e:
-            result = "Error: %s" % e.output
-            self.logger.debug("Error occurred: Code: %s, Text: %s" % (e.returncode, e.output))
-        return result
+        errorMsg = ""
+
+        # return error code if it contains ";" or "&"
+        self.logger.debug("=========")
+        self.logger.debug(_textArgument.find("&"))
+        if _textArgument.find("&") != -1 or _textArgument.find(";") != -1:
+            errorMsg = "ERROR: Invalid character found in argument"
+
+        if errorMsg != "":
+            self.sendMessage(_sender, errorMsg)
+            return 1, errorMsg
+
+        return 0, _textArgument
+
+    def _getGitRepositoryPath(self, _sender, _repository):
+        # create fully qualified path
+        commandPath = os.path.join(self.gitdir, _repository)
+
+        # check if path exists at all
+        # don't reveal path in return message
+        if not os.path.exists(commandPath):
+            self.printDebugMessage(_sender, "No git clone with name '%s' exists" % _repository)
+            return 1, ""
+
+        # check if constructed path is a valid git repository/clone
+        if not os.path.exists(os.path.join(commandPath,".git")):
+            self.printDebugMessage(_sender, "'%s' is no GIT repository" % commandPath)
+            return 1, ""
+
+        return 0, commandPath
+
+    def handleCommitCommand(self, _sender, _arguments):
+        """
+        Handle the 'git commit -a' command
+        """
+        if len(_arguments) == 0:
+            # no arguments provided, send help
+            self.sendMessage(_sender,
+                "Usage: commit <directory> <message>\n\nCommit directory using given message.")
+            self.logger.debug("No repository name for 'commit' provided.")
+        else:
+            repository = _arguments[0]
+            self.printDebugMessage(_sender, 
+                "Trying to commit repository '%s'" % repository)
+
+            returnCode = 0
+
+            if len(_arguments) > 1:
+                commitMsg = ' '.join(_arguments[1:])
+                returnCode, commitMsg = self.sanitizeArguments(
+                    _sender, commitMsg)
+            else:
+                commitMsg = "Autocommit using GitBot"
+
+            if returnCode == 0:
+                returnCode, commandPath = \
+                    self._getGitRepositoryPath(_sender, repository)
+                if returnCode == 0:
+                    # execute git commit command and send result to sender
+                    returnCode, result = \
+                        self.executeShellCommand(
+                            "git commit -a -m \"%s\"" % commitMsg, commandPath)
+                    if returnCode == 0:
+                        self.sendMessage(_sender, result)
+                    elif returnCode == 1:
+                        self.sendMessage(_sender, "Nothing to commit")
 
     def handlePullCommand(self, _sender, _arguments):
         """
@@ -63,22 +114,12 @@ class GitBot(GenericBot):
             repository = _arguments[0]
             self.printDebugMessage(_sender, "Trying to pull repository '%s'" % repository)
 
-            # create fully qualified path
-            commandPath = os.path.join(self.gitdir,repository)
-
-            # check if path exists at all
-            # don't reveal path in return message
-            if not os.path.exists(commandPath):
-                self.printDebugMessage(_sender, "No git clone with name '%s' exists" % repository)
-                return
-
-            # check if constructed path is a valid git repository/clone
-            if not os.path.exists(os.path.join(commandPath,".git")):
-                self.printDebugMessage(_sender, "'%s' is no GIT repository" % commandPath)
-
-            # execute git pull command and send result to sender
-            result = self.executeShellCommand("git pull", commandPath)
-            self.sendMessage(_sender, result)
+            returnCode, commandPath = self._getGitRepositoryPath(_sender, repository)
+            if returnCode == 0:
+                # execute git pull command and send result to sender
+                returnCode, result = self.executeShellCommand("git pull", commandPath)
+                if returnCode == 0:
+                    self.sendMessage(_sender, result)
 
 
 
