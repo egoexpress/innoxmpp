@@ -121,6 +121,27 @@ class GitBot(GenericBot):
                 if returnCode == 0:
                     self.sendMessage(_sender, result)
 
+    def handlePushCommand(self, _sender, _arguments):
+        """
+        Handle the 'git push' command
+        """
+        if len(_arguments) == 0:
+            # no arguments provided, send help
+            self.sendMessage(_sender,"Usage: push <directory>\n\nPush a directory to its origin")
+            self.logger.debug("No repository name for 'push' provided.")
+        else:
+            # arguments given, the first one is treated as the repository
+            # all other arguments are ignored (for now)
+            repository = _arguments[0]
+            self.printDebugMessage(_sender, "Trying to push repository '%s'" % repository)
+
+            returnCode, commandPath = self._getGitRepositoryPath(_sender, repository)
+            if returnCode == 0:
+                # execute git push command and send result to sender
+                returnCode, result = self.executeShellCommand("git push", commandPath)
+                if returnCode == 0:
+                    self.sendMessage(_sender, result)
+
 
 
 
