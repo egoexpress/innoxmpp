@@ -12,6 +12,8 @@ import logging
 import sleekxmpp
 import configparser
 import ssl
+import subprocess
+import os
 
 class GenericBot(sleekxmpp.ClientXMPP):
     """
@@ -92,6 +94,28 @@ class GenericBot(sleekxmpp.ClientXMPP):
 
         # TODO: roster data is saved in self.roster/self.client_roster
         # maybe use this data as base for push messages
+
+    def executeShellCommand(self, _command,  _targetDir=None):
+        """
+        Execute command on the shell using subprocess
+        """
+        # change to target dir if path was given
+        if _targetDir != None:
+            os.chdir(_targetDir)
+
+        # try to execute the command 
+        try:
+            result = subprocess.check_output(_command, 
+                        shell=True,                 # run in a subshell
+                        universal_newlines=True,    # always return text
+                        stderr=subprocess.STDOUT    # redirect stderr to stdout
+                        )
+        except subprocess.CalledProcessError as e:
+            result = "Error: %s" % e.output
+            self.logger.debug("Error occurred: Code: %s, Text: %s" % (e.returncode, e.output))
+            return e.returncode, ""
+
+        return 0, result
 
     def getCommandHandlerName(self, _command):
         """
