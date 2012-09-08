@@ -66,10 +66,13 @@ class GitBot(GenericBot):
 
     def handleCommitCommand(self, _sender, _arguments):
         """
-        Handle the 'git commit -a' command
+        commit <repository> [<message>]
+
+        Commit current state of <repository> using optional <message>
         """
         if len(_arguments) == 0:
             # no arguments provided, send help
+            # TODO: use docstring of function
             self.sendMessage(_sender,
                 "Usage: commit <directory> <message>\n\nCommit directory using given message.")
             self.logger.debug("No repository name for 'commit' provided.")
@@ -102,7 +105,9 @@ class GitBot(GenericBot):
 
     def handlePullCommand(self, _sender, _arguments):
         """
-        Handle the 'git pull' command
+        pull <repository>
+
+        Pull a directory from its origin
         """
         if len(_arguments) == 0:
             # no arguments provided, send help
@@ -121,9 +126,12 @@ class GitBot(GenericBot):
                 if returnCode == 0:
                     self.sendMessage(_sender, result)
 
+    # handle the 'git push' command
     def handlePushCommand(self, _sender, _arguments):
         """
-        Handle the 'git push' command
+        push <repository>
+
+        Push a given directory to its origin"
         """
         if len(_arguments) == 0:
             # no arguments provided, send help
@@ -141,9 +149,3 @@ class GitBot(GenericBot):
                 returnCode, result = self.executeShellCommand("git push", commandPath)
                 if returnCode == 0:
                     self.sendMessage(_sender, result)
-
-
-
-
-
-

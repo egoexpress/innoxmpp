@@ -14,6 +14,7 @@ import configparser
 import ssl
 import subprocess
 import os
+import inspect
 
 class GenericBot(sleekxmpp.ClientXMPP):
     """
@@ -189,3 +190,28 @@ class GenericBot(sleekxmpp.ClientXMPP):
                 # execute command handler if found
                 self.logger.debug("Valid command %s found, processing" % command)
                 commandHandler(sender, arguments)
+
+
+    # handle the 'help' command
+    def handleHelpCommand(self, _sender, _arguments):
+        """
+        help
+
+        Get overview of all available commands
+        """
+        docStrings = []
+
+        # get own member objects
+        memberObjects = inspect.getmembers(self)
+        # traverse objects
+        for objectName, objectRef in memberObjects:
+            # get all command handlers
+            if (objectName.startswith("handle") and objectName.endswith("Command")):
+                # extract docstrings and append to array
+                docStrings.append(inspect.getdoc(objectRef).replace("\n\n"," - "))
+        
+        # create message, containing help header with current class (subclass of
+        # GenericBot) and all help strings on separate lines
+        self.sendMessage(_sender, "Help for %s\n\n%s" % (
+            self.__module__.split(".")[1], "\n".join(docStrings)))
+

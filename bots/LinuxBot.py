@@ -21,15 +21,11 @@ class LinuxBot(GenericBot):
 
     def handleUptimeCommand(self, _sender, _arguments):
         """
-        Handle the 'uptime' command
+        uptime
+
+        Show the system uptime and load
         """
         # execute git pull command and send result to sender
         returnCode, result = self.executeShellCommand("echo $HOSTNAME && uptime")
         if returnCode == 0:
             self.sendMessage(_sender, result)
-
-
-
-
-
-
