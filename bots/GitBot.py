@@ -47,23 +47,35 @@ class GitBot(GenericBot):
 
         return 0, _textArgument
 
+    # construct fully qualified repository path for given _repository
+    # plus some sanity checks (e.g. if the dir is a valid repository)
     def _getGitRepositoryPath(self, _sender, _repository):
+        """
+        ___getGitRepositoryPath(_sender, _repository)
+
+        create fully qualified name for _repository using the
+        ini setting 'gitdir', send error messages to _sender
+        """
+
         # create fully qualified path
         commandPath = os.path.join(self.gitdir, _repository)
 
         # check if path exists at all
         # don't reveal path in return message
         if not os.path.exists(commandPath):
-            self.printDebugMessage(_sender, "No git clone with name '%s' exists" % _repository)
+            self.printDebugMessage(_sender, 
+                "No git clone with name '%s' exists" % _repository)
             return 1, ""
 
         # check if constructed path is a valid git repository/clone
         if not os.path.exists(os.path.join(commandPath,".git")):
-            self.printDebugMessage(_sender, "'%s' is no GIT repository" % commandPath)
+            self.printDebugMessage(_sender, 
+                "'%s' is no GIT repository" % commandPath)
             return 1, ""
 
         return 0, commandPath
 
+    # handler for the 'git commit -a [-m <message>]' command
     def handleCommitCommand(self, _sender, _arguments):
         """
         commit <repository> [<message>]
@@ -71,10 +83,9 @@ class GitBot(GenericBot):
         Commit current state of <repository> using optional <message>
         """
         if len(_arguments) == 0:
-            # no arguments provided, send help
-            # TODO: use docstring of function
+            # no arguments provided, send help (using __doc__)
             self.sendMessage(_sender,
-                "Usage: commit <directory> <message>\n\nCommit directory using given message.")
+                "Usage: %s" % self._getDocForCurrentFunction())
             self.logger.debug("No repository name for 'commit' provided.")
         else:
             repository = _arguments[0]
@@ -103,6 +114,7 @@ class GitBot(GenericBot):
                     elif returnCode == 1:
                         self.sendMessage(_sender, "Nothing to commit")
 
+    # handler for the 'git pull' command
     def handlePullCommand(self, _sender, _arguments):
         """
         pull <repository>
@@ -110,8 +122,9 @@ class GitBot(GenericBot):
         Pull a directory from its origin
         """
         if len(_arguments) == 0:
-            # no arguments provided, send help
-            self.sendMessage(_sender,"Usage: pull <directory>\n\nPull a directory from its origin")
+            # no arguments provided, send help (using __doc__)
+            self.sendMessage(_sender,
+                "Usage: %s", self._getDocForCurrentFunction())
             self.logger.debug("No repository name for 'pull' provided.")
         else:
             # arguments given, the first one is treated as the repository
@@ -126,7 +139,7 @@ class GitBot(GenericBot):
                 if returnCode == 0:
                     self.sendMessage(_sender, result)
 
-    # handle the 'git push' command
+    # handler for the 'git push' command
     def handlePushCommand(self, _sender, _arguments):
         """
         push <repository>
@@ -134,8 +147,9 @@ class GitBot(GenericBot):
         Push a given directory to its origin"
         """
         if len(_arguments) == 0:
-            # no arguments provided, send help
-            self.sendMessage(_sender,"Usage: push <directory>\n\nPush a directory to its origin")
+            # no arguments provided, send help (using __doc__)
+            self.sendMessage(_sender,
+                "Usage: %s" % self._getDocForCurrentFunction())
             self.logger.debug("No repository name for 'push' provided.")
         else:
             # arguments given, the first one is treated as the repository

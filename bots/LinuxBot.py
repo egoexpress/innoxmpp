@@ -19,6 +19,7 @@ class LinuxBot(GenericBot):
         """
         super(LinuxBot,self).__init__()
 
+    # handler for the Linux 'uptime' command
     def handleUptimeCommand(self, _sender, _arguments):
         """
         uptime

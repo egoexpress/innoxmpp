@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
 
 """
-    GenericBot - a generic XMPP bot, works as a skeleton for special 'worker' bots who
-    do the actual (admin) work
+    GenericBot - a generic XMPP bot, works as a skeleton for special 
+    'worker' bots who do the actual (admin) work
     Part of the InnoXMPP framework
     Copyright (C) 2012 Bjoern Stierand
 """
 
-import getpass
-import logging
-import sleekxmpp
-import configparser
-import ssl
-import subprocess
-import os
-import inspect
+import getpass              # used for interactive password entry
+import logging              # output logging
+import sleekxmpp            # XMPP communication
+import configparser         # parse INI configuration file
+import ssl                  # change SSL handling (for OpenFire servers)
+import subprocess           # run OS commands in a shell
+import os                   # perform OS operations (e.g. chdir)
+import inspect              # introspection (for generic 'help' function)
+import sys                  # get frame for function introspection
 
 class GenericBot(sleekxmpp.ClientXMPP):
     """
@@ -113,7 +114,8 @@ class GenericBot(sleekxmpp.ClientXMPP):
                         )
         except subprocess.CalledProcessError as e:
             result = "Error: %s" % e.output
-            self.logger.debug("Error occurred: Code: %s, Text: %s" % (e.returncode, e.output))
+            self.logger.debug(
+                "Error occurred: Code: %s, Text: %s" % (e.returncode, e.output))
             return e.returncode, ""
 
         return 0, result
@@ -125,6 +127,24 @@ class GenericBot(sleekxmpp.ClientXMPP):
         commandHandlerName = 'handle' + _command.capitalize() + 'Command'
         self.logger.debug("COMMAND HANDLER NAME: %s" % commandHandlerName)
         return commandHandlerName
+
+    def _getDocForCurrentFunction(self):
+        """
+        Return __doc__ for CALLER function
+        """
+        # get name as string for caller function
+        # taken from http://code.activestate.com/recipes/66062/
+        callerName = sys._getframe(1).f_code.co_name
+
+        # find matching member object
+        # somehow getmembers supports a predicate, but I honestly don't
+        # know how it works, so I use iteration for now
+        memberObjects = inspect.getmembers(self)
+        for objectName, objectRef in memberObjects:
+            # check if we have found the function we want
+            if objectName == callerName:
+                # return stripped docstring for function reference
+                return inspect.getdoc(objectRef) 
 
     def run(self):
         """
@@ -180,19 +200,22 @@ class GenericBot(sleekxmpp.ClientXMPP):
             try:
                 commandHandler = getattr(self, commandHandlerName)
             except AttributeError as a:
-                self.logger.info("Invalid command called, no handler found: %s" % command)
+                self.logger.info(
+                    "Invalid command called, no handler found: %s" % command)
                 commandHandler = None
 
             if not commandHandler:
-                # return error if no command handler (and thus no matching command) exists
+                # return error if no command handler (and thus no 
+                # matching command) exists
                 self.sendMessage(sender, "Invalid command '%s' sent!" % command)
             else:
                 # execute command handler if found
                 self.logger.debug("Valid command %s found, processing" % command)
                 commandHandler(sender, arguments)
 
-
-    # handle the 'help' command
+    # handle the (generic) 'help' command
+    # collect all command handlers from the concrete bot implementation
+    # by introspection and extract the docstrings
     def handleHelpCommand(self, _sender, _arguments):
         """
         help
@@ -206,7 +229,8 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # traverse objects
         for objectName, objectRef in memberObjects:
             # get all command handlers
-            if (objectName.startswith("handle") and objectName.endswith("Command")):
+            if (objectName.startswith("handle") and \
+                objectName.endswith("Command")):
                 # extract docstrings and append to array
                 docStrings.append(inspect.getdoc(objectRef).replace("\n\n"," - "))
         
