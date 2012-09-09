@@ -75,6 +75,42 @@ class GenericBot(sleekxmpp.ClientXMPP):
         #self.register_plugin('xep_0060') # PubSub
         #self.register_plugin('xep_0199') # XMPP Ping
 
+        # registered JIDs for this client (i.e. the JIDs to
+        # send monitoring messages to)
+        self.targetJIDs = []
+
+        # schedule tasks
+        self._scheduleTasks()
+
+    def _cacheJIDs(self):
+        """
+        Cache client JIDs from roster
+        These are going to be used to send push messages to
+
+        Runs only once 5 secs after startup
+        """
+
+        # get all target JIDs from roster for JID of bot
+        for targetJID in list(self.roster[self.boundjid.bare]):
+            # prevent to put the bot itself in the target list
+            # as we don't want to create an endless cycle of
+            # sending messages FROM the bot TO the bot
+            if targetJID != self.boundjid.bare:
+                self.targetJIDs.append(targetJID)
+
+    def _scheduleTasks(self):
+        """
+        Put tasks to be scheduled here
+
+        To be overwritten in concrete bot implementations
+        """
+
+        # schedule caching of target JIDs
+        def cacheJIDs():
+            self._cacheJIDs()
+
+        self.schedule("Cache JIDs", 5, cacheJIDs)
+
     def start(self, event):
         """
         Process the start of the XMPP session
@@ -238,4 +274,3 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # GenericBot) and all help strings on separate lines
         self.sendMessage(_sender, "Help for %s\n\n%s" % (
             self.__module__.split(".")[1], "\n".join(docStrings)))
-
