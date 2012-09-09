@@ -2,7 +2,7 @@
 
 """
     GitBot - a XMPP worker bot to perform git-related commands
-    part of the InnoXMPP framework
+    Part of the InnoXMPP framework
     Copyright (C) 2012 Bjoern Stierand
 """
 
@@ -14,6 +14,7 @@ class GitBot(GenericBot):
     GitBot - the git-related bot
     """
 
+    # initialize class
     def __init__(self):
         """
         Designated initializer
@@ -21,30 +22,37 @@ class GitBot(GenericBot):
         super(GitBot,self).__init__()
         self.loadConfigSettings()
 
+    # load ini settings from config file innoxmpp.ini's [GitBot] section
     def loadConfigSettings(self):
         """
         Load config settings from file
         """
+        # gitdir - directory where your git directories live
         self.gitdir = self.config.get("GitBot","gitdir")
+
+        # githubuser - user account for github
         self.githubuser = self.config.get("GitBot","githubuser")
 
-    def sanitizeArguments(self, _sender, _textArgument):
+    # clean up arguments sent by the client to avoid execution of
+    # arbitrary shell commands (e.g. by supplying arguments including
+    # characters as ';' or '&')
+    def _sanitizeArguments(self, _sender, _textArgument):
         """
         Sanitize input, reject if it contains suspicious characters
+        that could lead to execution of arbitrary shell commands
         """
-
         errorMsg = ""
 
         # return error code if it contains ";" or "&"
-        self.logger.debug("=========")
-        self.logger.debug(_textArgument.find("&"))
         if _textArgument.find("&") != -1 or _textArgument.find(";") != -1:
             errorMsg = "ERROR: Invalid character found in argument"
 
+        # if an error occurred (that is, an error msg is set, return 1
         if errorMsg != "":
             self.sendMessage(_sender, errorMsg)
             return 1, errorMsg
 
+        # no error occurred, return 0 and the input argument
         return 0, _textArgument
 
     # construct fully qualified repository path for given _repository
@@ -96,7 +104,7 @@ class GitBot(GenericBot):
 
             if len(_arguments) > 1:
                 commitMsg = ' '.join(_arguments[1:])
-                returnCode, commitMsg = self.sanitizeArguments(
+                returnCode, commitMsg = self._sanitizeArguments(
                     _sender, commitMsg)
             else:
                 commitMsg = "Autocommit using GitBot"
