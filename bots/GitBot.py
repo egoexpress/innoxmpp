@@ -109,6 +109,8 @@ class GitBot(GenericBot):
             else:
                 commitMsg = "Autocommit using GitBot"
 
+            # we can safely ignore the case when the returnCode was != 0
+            # as an error message is sent my _sanitizeArguments
             if returnCode == 0:
                 returnCode, commandPath = \
                     self._getGitRepositoryPath(_sender, repository)
@@ -121,6 +123,8 @@ class GitBot(GenericBot):
                         self.sendMessage(_sender, result)
                     elif returnCode == 1:
                         self.sendMessage(_sender, "Nothing to commit")
+
+            # TODO: send error result 
 
     # handler for the 'git pull' command
     def handlePullCommand(self, _sender, _arguments):
@@ -171,3 +175,42 @@ class GitBot(GenericBot):
                 returnCode, result = self.executeShellCommand("git push", commandPath)
                 if returnCode == 0:
                     self.sendMessage(_sender, result)
+
+    # handler for the 'git clone' command
+    def handleCloneCommand(self, sender, arguments):
+        """
+        clone <targeturl> [<localname>]
+
+        Clone a repository from target URL to local directory
+        Use remote repository name if no local name is given
+        """
+        if len(arguments) == 0:
+            # no arguments provided, send help (using __doc__)
+            self.sendMessage(sender,
+                "Usage: %s" % self._getDocForCurrentFunction())
+            self.logger.debug("No URL for 'clone' provided.")
+        else:
+            # arguments given, the first one is treated as the URL
+            repository = arguments[0]
+            if len(arguments) >= 2:
+                returnCode, localName = \
+                    self._sanitizeArguments(sender,arguments[1])
+            else:
+                returnCode = 0
+                localName = ""
+
+            if returnCode == 0:
+                self.printDebugMessage(sender, "Trying to clone from URL '%s'" % 
+                    repository)
+
+                commandPath = self.gitdir
+                # execute git clone command and send result to sender
+                returnCode, result = self.executeShellCommand(
+                    "git clone %s %s" % (repository, localName), commandPath)
+                if returnCode == 0:
+                    self.sendMessage(sender, result)
+                elif returnCode == 128:
+                    self.sendMessage(sender, "Target directory already exists")
+                else:
+                    self.sendMessage(sender, "Cloning failed! Error %s" % returnCode)
+
