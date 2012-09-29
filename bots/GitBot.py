@@ -124,8 +124,6 @@ class GitBot(GenericBot):
                     elif returnCode == 1:
                         self.sendMessage(_sender, "Nothing to commit")
 
-            # TODO: send error result 
-
     # handler for the 'git pull' command
     def handlePullCommand(self, _sender, _arguments):
         """
