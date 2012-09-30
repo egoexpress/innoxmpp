@@ -6,7 +6,7 @@
     Copyright (C) 2012 Bjoern Stierand
 """
 
-import bots
+import argparse
 
 class BotRunner():
 	"""
@@ -17,6 +17,20 @@ class BotRunner():
 		"""
 		Designated initializer
 		"""
-		pass
+		self.botClass = botclass
 
+		# instantiate bot class
+		self.botInstance = botclass(configOptions)
 
+		# set up argument parser
+		self.parser = argparse.ArgumentParser()
+
+		# add generic arguments
+		self.parser.add_argument("--config", help="set alternate config file location")
+
+	def run(self):
+		"""
+		run the bot instance
+		"""
+		self.arguments = parser.parse_args()
+		self.botInstance.run(configoptions=self.arguments)

@@ -7,7 +7,8 @@
 """
 
 from bots import GitBot
+from framework import BotRunner
 
-# create GitBot instance and run it
-gitBot = GitBot.GitBot()
+# set up BotRunner and execute the bot
+gitBot = BotRunner.BotRunner(GitBot.GitBot)
 gitBot.run()

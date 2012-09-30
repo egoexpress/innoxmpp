@@ -22,13 +22,17 @@ class GenericBot(sleekxmpp.ClientXMPP):
     GenericBot - a generic bot class (skeleton for the worker bots)
     """
 
-    def __init__(self, _loglevel=logging.DEBUG):
+    def __init__(self, configoptions=None, _loglevel=logging.DEBUG):
         """
         Designated initializer
         """
         # set loglevel
         logging.basicConfig(level=_loglevel,
                             format='%(levelname)-8s %(message)s')
+
+        self.configOptions = []
+        print(configoptions.config)
+        die
 
         # get current logger
         self.logger = logging.getLogger()

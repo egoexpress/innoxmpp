@@ -15,11 +15,11 @@ class GitBot(GenericBot):
     """
 
     # initialize class
-    def __init__(self):
+    def __init__(self, configoptions=None):
         """
         Designated initializer
         """
-        super(GitBot,self).__init__()
+        super(GitBot,self).__init__(configoptions)
         self.loadConfigSettings()
 
     # load ini settings from config file innoxmpp.ini's [GitBot] section
