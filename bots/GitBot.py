@@ -57,31 +57,38 @@ class GitBot(GenericBot):
 
     # construct fully qualified repository path for given _repository
     # plus some sanity checks (e.g. if the dir is a valid repository)
-    def _getGitRepositoryPath(self, _sender, _repository):
+    def _getGitRepositoryPath(self, sender, repository):
         """
-        ___getGitRepositoryPath(_sender, _repository)
-
-        create fully qualified name for _repository using the
-        ini setting 'gitdir', send error messages to _sender
+        create fully qualified name for repository using the
+        ini setting 'gitdir', send error messages to sender
         """
 
-        # create fully qualified path
-        commandPath = os.path.join(self.gitdir, _repository)
+        # sanitize repository name input (just to make sure nothing
+        # gets somehow messed up by strange control characters)
+        returnCode, repositoryPath = self._sanitizeArguments(sender, \
+            repository)
 
-        # check if path exists at all
-        # don't reveal path in return message
-        if not os.path.exists(commandPath):
-            self.printDebugMessage(_sender, 
-                "No git clone with name '%s' exists" % _repository)
-            return 1, ""
+        if returnCode == 0:
 
-        # check if constructed path is a valid git repository/clone
-        if not os.path.exists(os.path.join(commandPath,".git")):
-            self.printDebugMessage(_sender, 
-                "'%s' is no GIT repository" % commandPath)
-            return 1, ""
+            # create fully qualified path
+            commandPath = os.path.join(self.gitdir, repository)
 
-        return 0, commandPath
+            # check if path exists at all
+            # don't reveal path in return message
+            if not os.path.exists(commandPath):
+                self.printDebugMessage(sender, 
+                    "No git clone with name '%s' exists" % repository)
+                return 1, ""
+
+            # check if constructed path is a valid git repository/clone
+            if not os.path.exists(os.path.join(commandPath,".git")):
+                self.printDebugMessage(sender, 
+                    "'%s' is no GIT repository" % commandPath)
+                return 1, ""
+
+            return 0, commandPath
+
+        return returnCode, ""
 
     # handler for the 'git commit -a [-m <message>]' command
     def handleCommitCommand(self, _sender, _arguments):
