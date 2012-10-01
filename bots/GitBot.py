@@ -212,3 +212,28 @@ class GitBot(GenericBot):
                 else:
                     self.sendMessage(sender, "Cloning failed! Error %s" % returnCode)
 
+    # handler for the 'git branch -a' command
+    def handleListbranchesCommand(self, sender, arguments):
+        """
+        listbranches <repository>
+
+        List all available branches for <repository>
+        """
+        if len(arguments) == 0:
+            # no arguments provided, send help (using __doc__)
+            self.sendMessage(sender,
+                "Usage: %s", self._getDocForCurrentFunction())
+            self.logger.debug("No repository name for 'listbranches' provided.")
+        else:
+            # arguments given, the first one is treated as the repository
+            repository = arguments[0]
+            self.printDebugMessage(sender, "Listing branches of repository '%s'" % repository)
+
+            returnCode, commandPath = self._getGitRepositoryPath(sender, repository)
+            if returnCode == 0:
+                # execute git branch command and send result to sender
+                # TODO: check if colored output of 'git branch -a' messes up display in client
+                returnCode, result = self.executeShellCommand("git branch -a", commandPath)
+                if returnCode == 0:
+                    self.sendMessage(sender, result)
+
