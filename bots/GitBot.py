@@ -57,31 +57,38 @@ class GitBot(GenericBot):
 
     # construct fully qualified repository path for given _repository
     # plus some sanity checks (e.g. if the dir is a valid repository)
-    def _getGitRepositoryPath(self, _sender, _repository):
+    def _getGitRepositoryPath(self, sender, repository):
         """
-        ___getGitRepositoryPath(_sender, _repository)
-
-        create fully qualified name for _repository using the
-        ini setting 'gitdir', send error messages to _sender
+        create fully qualified name for repository using the
+        ini setting 'gitdir', send error messages to sender
         """
 
-        # create fully qualified path
-        commandPath = os.path.join(self.gitdir, _repository)
+        # sanitize repository name input (just to make sure nothing
+        # gets somehow messed up by strange control characters)
+        returnCode, repositoryPath = self._sanitizeArguments(sender, \
+            repository)
 
-        # check if path exists at all
-        # don't reveal path in return message
-        if not os.path.exists(commandPath):
-            self.printDebugMessage(_sender, 
-                "No git clone with name '%s' exists" % _repository)
-            return 1, ""
+        if returnCode == 0:
 
-        # check if constructed path is a valid git repository/clone
-        if not os.path.exists(os.path.join(commandPath,".git")):
-            self.printDebugMessage(_sender, 
-                "'%s' is no GIT repository" % commandPath)
-            return 1, ""
+            # create fully qualified path
+            commandPath = os.path.join(self.gitdir, repository)
 
-        return 0, commandPath
+            # check if path exists at all
+            # don't reveal path in return message
+            if not os.path.exists(commandPath):
+                self.printDebugMessage(sender, 
+                    "No git clone with name '%s' exists" % repository)
+                return 1, ""
+
+            # check if constructed path is a valid git repository/clone
+            if not os.path.exists(os.path.join(commandPath,".git")):
+                self.printDebugMessage(sender, 
+                    "'%s' is no GIT repository" % commandPath)
+                return 1, ""
+
+            return 0, commandPath
+
+        return returnCode, ""
 
     # handler for the 'git commit -a [-m <message>]' command
     def handleCommitCommand(self, _sender, _arguments):
@@ -123,8 +130,6 @@ class GitBot(GenericBot):
                         self.sendMessage(_sender, result)
                     elif returnCode == 1:
                         self.sendMessage(_sender, "Nothing to commit")
-
-            # TODO: send error result 
 
     # handler for the 'git pull' command
     def handlePullCommand(self, _sender, _arguments):
@@ -213,4 +218,29 @@ class GitBot(GenericBot):
                     self.sendMessage(sender, "Target directory already exists")
                 else:
                     self.sendMessage(sender, "Cloning failed! Error %s" % returnCode)
+
+    # handler for the 'git branch -a' command
+    def handleListbranchesCommand(self, sender, arguments):
+        """
+        listbranches <repository>
+
+        List all available branches for <repository>
+        """
+        if len(arguments) == 0:
+            # no arguments provided, send help (using __doc__)
+            self.sendMessage(sender,
+                "Usage: %s", self._getDocForCurrentFunction())
+            self.logger.debug("No repository name for 'listbranches' provided.")
+        else:
+            # arguments given, the first one is treated as the repository
+            repository = arguments[0]
+            self.printDebugMessage(sender, "Listing branches of repository '%s'" % repository)
+
+            returnCode, commandPath = self._getGitRepositoryPath(sender, repository)
+            if returnCode == 0:
+                # execute git branch command and send result to sender
+                # TODO: check if colored output of 'git branch -a' messes up display in client
+                returnCode, result = self.executeShellCommand("git branch -a", commandPath)
+                if returnCode == 0:
+                    self.sendMessage(sender, result)
 
