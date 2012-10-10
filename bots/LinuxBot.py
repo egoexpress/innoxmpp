@@ -52,7 +52,7 @@ class LinuxBot(GenericBot):
         self.schedule("Check Free Space", 60, checkFreeSpace, repeat=True)
 
     # handler for the Linux 'uptime' command
-    def handleUptimeCommand(self, _sender, _arguments):
+    def handleUptimeCommand(self, sender, arguments):
         """
         uptime
 
@@ -61,7 +61,7 @@ class LinuxBot(GenericBot):
         # execute git pull command and send result to sender
         returnCode, result = self.executeShellCommand("echo $HOSTNAME && uptime")
         if returnCode == 0:
-            self.sendMessage(_sender, result)
+            self.sendMessage(sender, result)
 
     # taken from http://stackoverflow.com/questions/51658/\
     # cross-platform-space-remaining-on-volume-using-python

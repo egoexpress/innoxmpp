@@ -22,12 +22,12 @@ class GenericBot(sleekxmpp.ClientXMPP):
     GenericBot - a generic bot class (skeleton for the worker bots)
     """
 
-    def __init__(self, _loglevel=logging.DEBUG):
+    def __init__(self, loglevel=logging.DEBUG):
         """
         Designated initializer
         """
         # set loglevel
-        logging.basicConfig(level=_loglevel,
+        logging.basicConfig(level=loglevel,
                             format='%(levelname)-8s %(message)s')
 
         # get current logger
@@ -133,17 +133,17 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # TODO: roster data is saved in self.roster/self.client_roster
         # maybe use this data as base for push messages
 
-    def executeShellCommand(self, _command,  _targetDir=None):
+    def executeShellCommand(self, command,  targetDir=None):
         """
         Execute command on the shell using subprocess
         """
         # change to target dir if path was given
-        if _targetDir != None:
-            os.chdir(_targetDir)
+        if targetDir != None:
+            os.chdir(targetDir)
 
         # try to execute the command 
         try:
-            result = subprocess.check_output(_command, 
+            result = subprocess.check_output(command, 
                         shell=True,                 # run in a subshell
                         universal_newlines=True,    # always return text
                         stderr=subprocess.STDOUT    # redirect stderr to stdout
@@ -156,11 +156,11 @@ class GenericBot(sleekxmpp.ClientXMPP):
 
         return 0, result
 
-    def getCommandHandlerName(self, _command):
+    def getCommandHandlerName(self, command):
         """
         Get command handler name for passed command
         """
-        commandHandlerName = 'handle' + _command.capitalize() + 'Command'
+        commandHandlerName = 'handle' + command.capitalize() + 'Command'
         self.logger.debug("COMMAND HANDLER NAME: %s" % commandHandlerName)
         return commandHandlerName
 
@@ -192,36 +192,36 @@ class GenericBot(sleekxmpp.ClientXMPP):
         else:
             print("Unable to connect.")
 
-    def printDebugMessage(self, _recipient, _text):
+    def printDebugMessage(self, recipient, text):
         """
         Handle debug message (send to sender and print on stdout)
         """
         self.logger.debug(_text)
-        self.sendMessage(_recipient,_text)
+        self.sendMessage(recipient,text)
 
-    def sendMessage(self, _recipient, _text):
+    def sendMessage(self, recipient, text):
         """
-        Send message with given _text to _recipient
+        Send message with given text to recipient
         """
-        self.logger.debug("Send message '%s' to '%s'" % (_text, _recipient))
-        self.send_message(mto=_recipient,mbody=_text)
+        self.logger.debug("Send message '%s' to '%s'" % (text, recipient))
+        self.send_message(mto=recipient,mbody=text)
 
-    def handleMessage(self, _msg):
+    def handleMessage(self, message):
         """
         Process incoming messages
         """
-        if _msg['type'] in ('chat', 'normal','groupchat'):
+        if message['type'] in ('chat', 'normal','groupchat'):
             # TODO: handle groupchat messages (do I need special handling here)
 
             # extract message body
-            messageBody = _msg['body']
+            messageBody = message['body']
             self.logger.debug('MESSAGE BODY: %s', messageBody)
 
             # get command and arguments from message
             messageParts = messageBody.split()
             command = messageParts[0]
 
-            sender = _msg['from']
+            sender = message['from']
             self.logger.debug('MESSAGE FROM: %s' % sender)
 
             arguments = []
@@ -252,7 +252,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
     # handle the (generic) 'help' command
     # collect all command handlers from the concrete bot implementation
     # by introspection and extract the docstrings
-    def handleHelpCommand(self, _sender, _arguments):
+    def handleHelpCommand(self, sender, arguments):
         """
         help
 
@@ -272,5 +272,5 @@ class GenericBot(sleekxmpp.ClientXMPP):
         
         # create message, containing help header with current class (subclass of
         # GenericBot) and all help strings on separate lines
-        self.sendMessage(_sender, "Help for %s\n\n%s" % (
+        self.sendMessage(sender, "Help for %s\n\n%s" % (
             self.__module__.split(".")[1], "\n".join(docStrings)))
