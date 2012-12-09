@@ -1,0 +1,38 @@
+[BackupBot]
+# jid for the bot
+jid=CHANGEME
+
+# jabber password
+password=CHANGEME
+
+# logfile directory
+logdir=/var/log/duplicity
+
+# logfiles for backup destinations
+logfiles=home.log srv.log
+
+[GitBot]
+# jid for the bot
+jid=CHANGEME
+
+# jabber password
+password=CHANGEME
+
+# target dir for git work
+gitdir=/home/user/git
+
+# username at github.com (used for forks)
+ghuser=egoexpress
+
+[LinuxBot]
+# jid for the bot
+jid=CHANGEME
+
+# jabber password
+password=CHANGEME
+
+# check these directories for free space
+fs_directories=/usr / /var
+
+# free space threshold (in percent)
+fs_threshold=90
