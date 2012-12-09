@@ -6,8 +6,9 @@
     Copyright (C) 2012 Bjoern Stierand
 """
 
-from bots import LinuxBot
+from bots.LinuxBot import LinuxBot
+from framework.BotRunner import BotRunner
 
 # create LinuxBot instance and run it
-linuxBot = LinuxBot.LinuxBot()
+linuxBot = BotRunner(LinuxBot)
 linuxBot.run()

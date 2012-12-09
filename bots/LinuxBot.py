@@ -8,7 +8,7 @@
 
 from bots.GenericBot import GenericBot
 import os                   # needed for free space detection
-import platform             # needed for free space detection
+
 
 class LinuxBot(GenericBot):
     """
@@ -20,19 +20,17 @@ class LinuxBot(GenericBot):
         """
         Designated initializer
         """
-        super(LinuxBot,self).__init__()
-        self.loadConfigSettings()
+        super(LinuxBot, self).__init__()
 
-    # load ini settings from config file innoxmpp.ini's [LinuxBot] section
-    def loadConfigSettings(self):
-        """
-        Load config settings from file
-        """
-        # gitdir - directory where your git directories live
-        self.fsdirs = self.config.get("LinuxBot","fs_directories").split()
+        self.configoptions.addConfigOption(
+            name="fsdirs",
+            value="/tmp",
+            description="filesystem directories to monitor for free space")
 
-        # githubuser - user account for github
-        self.fsthreshold = self.config.getint("LinuxBot","fs_threshold")
+        self.configoptions.addConfigOption(
+            name="fslimit",
+            value="10",
+            description="alarm limit filesystem threshold")
 
     def _scheduleTasks(self):
         """
@@ -43,7 +41,7 @@ class LinuxBot(GenericBot):
         wrapper using a local function which calls the class function
         """
 
-        super(LinuxBot,self)._scheduleTasks()
+        super(LinuxBot, self)._scheduleTasks()
 
         # schedule checking of free space
         def checkFreeSpace():
@@ -67,13 +65,13 @@ class LinuxBot(GenericBot):
     # cross-platform-space-remaining-on-volume-using-python
     # but modified (original only returns free blocks)
     def _getUsedSpaceInPercent(self, folder):
-        """ 
+        """
         Return folder used space (in percent)
         """
         stats = os.statvfs(folder)
         totalSize = stats.f_blocks * stats.f_frsize
         freeSpace = stats.f_bavail * stats.f_frsize
-        return 100 - (freeSpace/totalSize * 100)
+        return 100 - (freeSpace / totalSize * 100)
 
     # callback to check system free space
     def taskCheckFreeSpace(self):
@@ -85,7 +83,7 @@ class LinuxBot(GenericBot):
         resultMsg = "\n"
 
         # get free space (in %) for every configured mount point
-        for fsdir in self.fsdirs:
+        for fsdir in self.configoptions["fsdirs"].split():
             curSpace = self._getUsedSpaceInPercent(fsdir)
 
             # if it's above the threshold, add mount point and
