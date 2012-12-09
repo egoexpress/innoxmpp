@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -6,7 +6,9 @@
     Copyright (C) 2012 Bjoern Stierand
 """
 
-from bots import BackupBot
+from bots.BackupBot import BackupBot
+from framework.BotRunner import BotRunner
 
-backupBot = BackupBot.BackupBot()
+# create LinuxBot instance and run it
+backupBot = BotRunner(BackupBot)
 backupBot.run()
