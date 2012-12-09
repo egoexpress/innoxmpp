@@ -4,6 +4,8 @@
     Class to store config options for the bots
 """
 
+import configparser
+
 
 class ConfigOptions():
 
@@ -42,4 +44,32 @@ class ConfigOptions():
         overload special method to provide direct access to items via dict
         syntax
         """
+        return self.setConfigValue(name, value)
+
+    def setConfigValue(self, name, value):
+        """
+        overload special method to provide direct access to items via dict
+        syntax
+        """
         self.options[name]["value"] = value
+
+    def processCommandLineArguments(self, arguments):
+        """
+        process arguments that came from the argumentparser
+        """
+        # replace default config options if any value is set
+        for name, value in arguments.items():
+            if value != None:
+                self.setConfigValue(name, value)
+
+    def parseConfig(self, classname, config):
+        """
+        process configparser arguments
+        """
+        for key in self.options.keys():
+            try:
+                value = config.get(classname, key)
+                self.setConfigValue(key, value)
+            except configparser.NoOptionError:
+                # ignore options that are not set in the config file
+                pass
