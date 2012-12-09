@@ -172,7 +172,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
 
         # set loglevel
         logging.basicConfig(level=self.configoptions["loglevel"],
-                            format='%(levelname)-8s %(filename)s:%(funcName)s(%(lineno)d) %(message)s')
+            format='%(levelname)-8s %(filename)s:%(funcName)s(%(lineno)d) %(message)s')
 
         # get current logger
         self.logger = logging.getLogger()
