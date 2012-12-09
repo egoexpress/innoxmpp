@@ -9,6 +9,7 @@
 from bots.GenericBot import GenericBot
 import os
 
+
 class GitBot(GenericBot):
     """
     GitBot - the git-related bot
@@ -19,19 +20,17 @@ class GitBot(GenericBot):
         """
         Designated initializer
         """
-        super(GitBot,self).__init__()
-        self._loadConfigSettings()
+        super(GitBot, self).__init__()
 
-    # load ini settings from config file innoxmpp.ini's [GitBot] section
-    def _loadConfigSettings(self):
-        """
-        Load config settings from file
-        """
-        # gitdir - directory where your git directories live
-        self.gitdir = self.config.get("GitBot","gitdir")
+        self.configoptions.addConfigOption(
+            name="gitdir",
+            value="CHANGEME",
+            description="directory to store GIT clones")
 
-        # githubuser - user account for github
-        self.githubuser = self.config.get("GitBot","githubuser")
+        self.configoptions.addConfigOption(
+            name="ghuser",
+            value="CHANGEME",
+            description="username for github.com")
 
     # clean up arguments sent by the client to avoid execution of
     # arbitrary shell commands (e.g. by supplying arguments including
@@ -71,18 +70,18 @@ class GitBot(GenericBot):
         if returnCode == 0:
 
             # create fully qualified path
-            commandPath = os.path.join(self.gitdir, repository)
+            commandPath = os.path.join(self.configoptions["gitdir"], repository)
 
             # check if path exists at all
             # don't reveal path in return message
             if not os.path.exists(commandPath):
-                self.printDebugMessage(sender, 
+                self.printDebugMessage(sender,
                     "No git clone with name '%s' exists" % repository)
                 return 1, ""
 
             # check if constructed path is a valid git repository/clone
-            if not os.path.exists(os.path.join(commandPath,".git")):
-                self.printDebugMessage(sender, 
+            if not os.path.exists(os.path.join(commandPath, ".git")):
+                self.printDebugMessage(sender,
                     "'%s' is no GIT repository" % commandPath)
                 return 1, ""
 
@@ -104,7 +103,7 @@ class GitBot(GenericBot):
             self.logger.debug("No repository name for 'commit' provided.")
         else:
             repository = arguments[0]
-            self.printDebugMessage(sender, 
+            self.printDebugMessage(sender,
                 "Trying to commit repository '%s'" % repository)
 
             returnCode = 0
@@ -125,7 +124,7 @@ class GitBot(GenericBot):
                     # execute git commit command and send result to sender
                     returnCode, result = \
                         self.executeShellCommand(
-                            "git commit -a -m \"%s\"" % commitMsg, 
+                            "git commit -a -m \"%s\"" % commitMsg,
                             commandPath)
                     if returnCode == 0:
                         self.sendMessage(sender, result)
@@ -148,14 +147,14 @@ class GitBot(GenericBot):
             # arguments given, the first one is treated as the repository
             # all other arguments are ignored (for now)
             repository = arguments[0]
-            self.printDebugMessage(sender, "Trying to pull repository '%s'" % 
+            self.printDebugMessage(sender, "Trying to pull repository '%s'" %
                 repository)
 
-            returnCode, commandPath = self._getGitRepositoryPath(sender, 
+            returnCode, commandPath = self._getGitRepositoryPath(sender,
                 repository)
             if returnCode == 0:
                 # execute git pull command and send result to sender
-                returnCode, result = self.executeShellCommand("git pull", 
+                returnCode, result = self.executeShellCommand("git pull",
                     commandPath)
                 if returnCode == 0:
                     self.sendMessage(sender, result)
@@ -176,14 +175,14 @@ class GitBot(GenericBot):
             # arguments given, the first one is treated as the repository
             # all other arguments are ignored (for now)
             repository = arguments[0]
-            self.printDebugMessage(sender, "Trying to push repository '%s'" % 
+            self.printDebugMessage(sender, "Trying to push repository '%s'" %
                 repository)
 
-            returnCode, commandPath = self._getGitRepositoryPath(sender, 
+            returnCode, commandPath = self._getGitRepositoryPath(sender,
                 repository)
             if returnCode == 0:
                 # execute git push command and send result to sender
-                returnCode, result = self.executeShellCommand("git push", 
+                returnCode, result = self.executeShellCommand("git push",
                     commandPath)
                 if returnCode == 0:
                     self.sendMessage(sender, result)
@@ -205,16 +204,16 @@ class GitBot(GenericBot):
             repository = arguments[0]
             if len(arguments) >= 2:
                 returnCode, localName = \
-                    self._sanitizeArguments(sender,arguments[1])
+                    self._sanitizeArguments(sender, arguments[1])
             else:
                 returnCode = 0
                 localName = ""
 
             if returnCode == 0:
-                self.printDebugMessage(sender, "Trying to clone from URL '%s'" % 
+                self.printDebugMessage(sender, "Trying to clone from URL '%s'" %
                     repository)
 
-                commandPath = self.gitdir
+                commandPath = self.configoptions["gitdir"]
                 # execute git clone command and send result to sender
                 returnCode, result = self.executeShellCommand(
                     "git clone %s %s" % (repository, localName), commandPath)
@@ -223,7 +222,7 @@ class GitBot(GenericBot):
                 elif returnCode == 128:
                     self.sendMessage(sender, "Target directory already exists")
                 else:
-                    self.sendMessage(sender, "Cloning failed! Error %s" % 
+                    self.sendMessage(sender, "Cloning failed! Error %s" %
                         returnCode)
 
     # handler for the 'git branch -a' command
@@ -238,7 +237,7 @@ class GitBot(GenericBot):
             self.sendMessage(sender,
                 "Usage: %s" % self._getDocForCurrentFunction())
             self.logger.debug("No repository name for 'branch' provided.")
-       
+
         # at least one paramter given - check for repository
         elif len(arguments) >= 1:
             repository = arguments[0]
@@ -253,7 +252,7 @@ class GitBot(GenericBot):
                 # only one argument - list branches
                 if len(arguments) == 1:
 
-                    self.printDebugMessage(sender, 
+                    self.printDebugMessage(sender,
                         "Listing branches of repository '%s'" % repository)
 
                     # execute git branch command and send result to sender
@@ -265,8 +264,8 @@ class GitBot(GenericBot):
                     sender, arguments[1])
 
                     if returnCode == 0:
-                        self.printDebugMessage(sender, 
-                            "Creating branch '%s' in repository '%s'" % 
+                        self.printDebugMessage(sender,
+                            "Creating branch '%s' in repository '%s'" %
                             (branchname, repository))
 
                         # execute git branch command and send result to sender

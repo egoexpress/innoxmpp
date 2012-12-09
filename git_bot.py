@@ -6,8 +6,9 @@
     Copyright (C) 2012 Bjoern Stierand
 """
 
-from bots import GitBot
+from bots.GitBot import GitBot
+from framework.BotRunner import BotRunner
 
-# create GitBot instance and run it
-gitBot = GitBot.GitBot()
+# set up BotRunner and startup the bot
+gitBot = BotRunner(GitBot)
 gitBot.run()
