@@ -307,3 +307,16 @@ class GitBot(GenericBot):
 
                 self.printDebugMessage(sender,
                     "Setting default repository to '%s'" % repository)
+
+    # handler to unset default repository
+    def handleClearRepoCommand(self, sender, arguments):
+        """
+        clearrepo
+
+        Unset default working repository for all following operations
+        """
+        oldRepo = self.defaultRepository
+        self.defaultRepository = None
+
+        self.printDebugMessage(sender,
+            "Unset default repository, was '%s'" % oldRepo)
