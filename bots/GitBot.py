@@ -32,6 +32,10 @@ class GitBot(GenericBot):
             value="CHANGEME",
             description="username for github.com")
 
+        # default repository when no parameter for repository
+        # operations is provided
+        self.defaultRepository = None
+
     # clean up arguments sent by the client to avoid execution of
     # arbitrary shell commands (e.g. by supplying arguments including
     # characters as ';' or '&')
@@ -225,7 +229,7 @@ class GitBot(GenericBot):
                     self.sendMessage(sender, "Cloning failed! Error %s" %
                         returnCode)
 
-    # handler for the 'git branch -a' command
+    # handler for the 'git branch [-a]' command
     def handleBranchCommand(self, sender, arguments):
         """
         branch <repository> [<branchname>]
@@ -274,3 +278,32 @@ class GitBot(GenericBot):
 
                 if returnCode == 0:
                     self.sendMessage(sender, result)
+
+    # handler to set default repository
+    def handleSetRepoCommand(self, sender, arguments):
+        """
+        setrepo <repository>
+
+        Set default working repository for all following operations
+        """
+        if len(arguments) == 0:
+            # no arguments provided, send help (using __doc__)
+            self.sendMessage(sender,
+                "Usage: %s" % self._getDocForCurrentFunction())
+            self.logger.debug("No repository name to set as default provided.")
+
+        # one paramter given - set as default repository
+        elif len(arguments) == 1:
+            repository = arguments[0]
+            returnCode, commandPath = \
+                self._getGitRepositoryPath(sender, repository)
+
+            self.logger.debug("Repository path: %s" % commandPath)
+
+            # repository name is valid
+            if returnCode == 0:
+
+                self.defaultRepository = repository
+
+                self.printDebugMessage(sender,
+                    "Setting default repository to '%s'" % repository)
