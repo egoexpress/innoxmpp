@@ -113,7 +113,7 @@ class GitBot(GenericBot):
             returnCode = 0
 
             if len(arguments) > 1:
-                commitMsg = ' '.join(arguments[1:])
+                commitMsg = ' '.join(arguments[1:]).strip('"')
                 returnCode, commitMsg = self._sanitizeArguments(
                     sender, commitMsg)
             else:
@@ -125,6 +125,7 @@ class GitBot(GenericBot):
                 returnCode, commandPath = \
                     self._getGitRepositoryPath(sender, repository)
                 if returnCode == 0:
+                    self.printDebugMessage(sender, commitMsg)
                     # execute git commit command and send result to sender
                     returnCode, result = \
                         self.executeShellCommand(
@@ -168,7 +169,7 @@ class GitBot(GenericBot):
         """
         push <repository>
 
-        Push a given directory to its origin"
+        Push a given directory to its origin
         """
         if len(arguments) == 0:
             # no arguments provided, send help (using __doc__)
@@ -218,13 +219,19 @@ class GitBot(GenericBot):
                     repository)
 
                 commandPath = self.configoptions["gitdir"]
+
+                if not os.path.exists(commandPath):
+                    self.printDebugMessage(sender,
+                        "Target git directory doesn't exist, check your config!")
+                    return 1, ""
+
                 # execute git clone command and send result to sender
                 returnCode, result = self.executeShellCommand(
                     "git clone %s %s" % (repository, localName), commandPath)
                 if returnCode == 0:
-                    self.sendMessage(sender, result)
+                    self.sendMessage(sender, "%sCompleted successful!" % result)
                 elif returnCode == 128:
-                    self.sendMessage(sender, "Target directory already exists")
+                    self.sendMessage(sender, "Target cloning directory already exists")
                 else:
                     self.sendMessage(sender, "Cloning failed! Error %s" %
                         returnCode)
@@ -280,7 +287,7 @@ class GitBot(GenericBot):
                     self.sendMessage(sender, result)
 
     # handler to set default repository
-    def handleSetRepoCommand(self, sender, arguments):
+    def handleSetrepoCommand(self, sender, arguments):
         """
         setrepo <repository>
 
@@ -309,7 +316,7 @@ class GitBot(GenericBot):
                     "Setting default repository to '%s'" % repository)
 
     # handler to unset default repository
-    def handleClearRepoCommand(self, sender, arguments):
+    def handleClearrepoCommand(self, sender, arguments):
         """
         clearrepo
 
