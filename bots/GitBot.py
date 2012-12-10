@@ -139,30 +139,42 @@ class GitBot(GenericBot):
     # handler for the 'git pull' command
     def handlePullCommand(self, sender, arguments):
         """
-        pull <repository>
+        pull [[<repository>] | [help]]
 
         Pull a directory from its origin
         """
+        repository = None
+
         if len(arguments) == 0:
+            if self.defaultRepository == None:
+                self.sendMessage(sender,
+                    "Usage: %s" % self._getDocForCurrentFunction())
+                self.printDebugMessage(sender, "No default repository set")
+                return 2
+            else:
+                repository = self.defaultRepository
+        elif len(arguments) == 1 and arguments[0] == "help":
             # no arguments provided, send help (using __doc__)
             self.sendMessage(sender,
-                "Usage: %s", self._getDocForCurrentFunction())
+                "Usage: %s" % self._getDocForCurrentFunction())
             self.logger.debug("No repository name for 'pull' provided.")
-        else:
-            # arguments given, the first one is treated as the repository
-            # all other arguments are ignored (for now)
-            repository = arguments[0]
-            self.printDebugMessage(sender, "Trying to pull repository '%s'" %
-                repository)
+            return 1
 
-            returnCode, commandPath = self._getGitRepositoryPath(sender,
-                repository)
+        # arguments given, the first one is treated as the repository
+        # all other arguments are ignored (for now)
+        if repository == None:
+            repository = arguments[0]
+        self.printDebugMessage(sender, "Trying to pull repository '%s'" %
+            repository)
+
+        returnCode, commandPath = self._getGitRepositoryPath(sender,
+            repository)
+        if returnCode == 0:
+            # execute git pull command and send result to sender
+            returnCode, result = self.executeShellCommand("git pull",
+                commandPath)
             if returnCode == 0:
-                # execute git pull command and send result to sender
-                returnCode, result = self.executeShellCommand("git pull",
-                    commandPath)
-                if returnCode == 0:
-                    self.sendMessage(sender, result)
+                self.sendMessage(sender, result)
 
     # handler for the 'git push' command
     def handlePushCommand(self, sender, arguments):
@@ -322,8 +334,12 @@ class GitBot(GenericBot):
 
         Unset default working repository for all following operations
         """
-        oldRepo = self.defaultRepository
-        self.defaultRepository = None
+        if self.defaultRepository == None:
+            self.printDebugMessage(sender,
+                "No default repository set")
+        else:
+            oldRepo = self.defaultRepository
+            self.defaultRepository = None
 
-        self.printDebugMessage(sender,
-            "Unset default repository, was '%s'" % oldRepo)
+            self.printDebugMessage(sender,
+                "Unset default repository, was '%s'" % oldRepo)
