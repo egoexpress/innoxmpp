@@ -7,30 +7,47 @@
 """
 
 import argparse
+import logging
+
 
 class BotRunner():
-	"""
-	BotRunner - execute bots and handle command line input
-	"""
+    """
+    BotRunner - execute bots and handle command line input
+    """
 
-	def __init__(self, botclass):
-		"""
-		Designated initializer
-		"""
-		self.botClass = botclass
+    def __init__(self, botclass):
+        """
+        Designated initializer
 
-		# instantiate bot class
-		self.botInstance = botclass(configOptions)
+        botclass - bot class that should be executed
+        """
+        # cache bot class and set the instance up
+        self.botInstance = botclass()
 
-		# set up argument parser
-		self.parser = argparse.ArgumentParser()
+        # set up logging for the bot runner
+        logging.basicConfig(level=logging.DEBUG,
+            format='%(levelname)-8s %(filename)s:%(funcName)s(%(lineno)d) %(message)s')
+        self.logger = logging.getLogger()
 
-		# add generic arguments
-		self.parser.add_argument("--config", help="set alternate config file location")
+        # set up argument parser
+        self.parser = argparse.ArgumentParser()
 
-	def run(self):
-		"""
-		run the bot instance
-		"""
-		self.arguments = parser.parse_args()
-		self.botInstance.run(configoptions=self.arguments)
+        # get configuration from bot class
+        # add config values to arg parser
+        # TODO: clean this up
+        for key, value in self.botInstance.configoptions.options.items():
+            self.logger.debug("Adding value %s" % key)
+            self.parser.add_argument("--%s" % key,
+                help=value["description"])
+
+    def run(self):
+        """
+        run the bot instance
+        """
+        # parse comnmand line arguments
+        arguments = self.parser.parse_args()
+
+        self.botInstance.configoptions.processCommandLineArguments(vars(arguments))
+
+        # run bot class,
+        self.botInstance.run()
