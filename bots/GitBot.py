@@ -311,7 +311,7 @@ class GitBot(GenericBot):
                 "Usage: %s" % self._getDocForCurrentFunction())
             self.logger.debug("No repository name to set as default provided.")
 
-        # one paramter given - set as default repository
+        # one parameter given - set as default repository
         elif len(arguments) == 1:
             repository = arguments[0]
             returnCode, commandPath = \
@@ -343,3 +343,63 @@ class GitBot(GenericBot):
 
             self.printDebugMessage(sender,
                 "Unset default repository, was '%s'" % oldRepo)
+
+    # handler to change a branch in git using 'checkout'
+    def handleCheckoutCommand(self, sender, arguments):
+        """
+        checkout <repository> <branch>
+
+        Checkout given branch in repository
+        """
+        if len(arguments) == 0:
+            # no arguments provided, send help (using __doc__)
+            self.sendMessage(sender,
+                "Usage: %s" % self._getDocForCurrentFunction())
+            self.logger.debug("No repo and branch name provided.")
+            return 1
+
+        # one parameter  - branch if self.defaultRepository is set
+        elif len(arguments) == 1:
+            # default repository has not been set using 'setrepo'
+            # deny operation
+            if self.defaultRepository == None:
+                self.sendMessage(sender,
+                    "Usage: %s" % self._getDocForCurrentFunction())
+                self.printDebugMessage(sender,
+                    "No repository provided and default repo not set")
+                return 1
+            else:
+                # default repository is set
+                repository = self.defaultRepository
+                branch = arguments[0]
+        # two parameters (repository and branch) were provided
+        else:
+            repository = arguments[0]
+            branch = arguments[1]
+
+        # sanitize arguments
+        returnCode, repository = self._sanitizeArguments(sender, repository)
+        if returnCode == 0:
+            returnCode, branch = self._sanitizeArguments(sender, branch)
+
+        if returnCode == 0:
+            # check if given repository is valid
+            returnCode, commandPath = \
+                self._getGitRepositoryPath(sender, repository)
+
+            self.logger.debug("Repository path: %s" % commandPath)
+
+            # repository name is valid, continue
+            if returnCode == 0:
+
+                # execute git checkout command to change branch
+                returnCode, result = self.executeShellCommand(
+                    "git checkout %s" % branch, commandPath)
+
+                if returnCode == 0:
+                    # branch change successful
+                    self.sendMessage(sender, result)
+                else:
+                    # branch change failed (e.g. if branch doesn't exist)
+                    self.sendMessage(sender,
+                        "Checking out branch '%s' failed" % branch)
