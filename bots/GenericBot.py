@@ -149,7 +149,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # find matching member object
         # somehow getmembers supports a predicate, but I honestly don't
         # know how it works, so I use iteration for now
-        memberObjects = inspect.getmembers(self)
+        memberObjects = inspect.getmembers(self, inspect.ismethod)
         for objectName, objectRef in memberObjects:
             # check if we have found the function we want
             if objectName == callerName:
@@ -275,7 +275,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
         docStrings = []
 
         # get own member objects
-        memberObjects = inspect.getmembers(self)
+        memberObjects = inspect.getmembers(self, inspect.ismethod)
         # traverse objects
         for objectName, objectRef in memberObjects:
             # get all command handlers
