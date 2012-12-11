@@ -215,10 +215,18 @@ class GenericBot(sleekxmpp.ClientXMPP):
 
     def sendMessage(self, recipient, text):
         """
-        Send message with given text to recipient
+        Send message with given text to recipient(s)
         """
-        self.logger.debug("Send message '%s' to '%s'" % (text, recipient))
-        self.send_message(mto=recipient, mbody=text)
+        # recipient is JID - only one recipient passed
+        if isinstance(recipient, sleekxmpp.jid.JID):
+            self.logger.debug("Send message '%s' to '%s'" % (text, recipient))
+            self.send_message(mto=recipient, mbody=text)
+
+        # recipient is array - multiple recipients passed
+        elif isinstance(recipient, list):
+            for item in recipient:
+                self.logger.debug("Send message '%s' to '%s'" % (text, item))
+                self.send_message(mto=item, mbody=text)
 
     def handleMessage(self, message):
         """
