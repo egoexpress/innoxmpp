@@ -96,45 +96,51 @@ class GitBot(GenericBot):
     # handler for the 'git commit -a [-m <message>]' command
     def handleCommitCommand(self, sender, arguments):
         """
-        commit <repository> [<message>]
+        commit [<repository>] [<message>]
 
         Commit current state of <repository> using optional <message>
         """
+        repository = None
+
         if len(arguments) == 0:
             # no arguments provided, send help (using __doc__)
-            self.sendMessage(sender,
-                "Usage: %s" % self._getDocForCurrentFunction())
-            self.logger.debug("No repository name for 'commit' provided.")
+            if self.defaultRepository == None:
+                self.sendMessage(sender,
+                    "Usage: %s" % self._getDocForCurrentFunction())
+                self.printDebugMessage(sender, "No default repository set")
+                return 2
+            else:
+                repository = self.defaultRepository
         else:
             repository = arguments[0]
-            self.printDebugMessage(sender,
-                "Trying to commit repository '%s'" % repository)
 
-            returnCode = 0
+        self.printDebugMessage(sender,
+            "Trying to commit repository '%s'" % repository)
 
-            if len(arguments) > 1:
-                commitMsg = ' '.join(arguments[1:]).strip('"')
-                returnCode, commitMsg = self._sanitizeArguments(
-                    sender, commitMsg)
-            else:
-                commitMsg = "Autocommit using GitBot"
+        returnCode = 0
 
-            # we can safely ignore the case when the returnCode was != 0
-            # as an error message is sent my _sanitizeArguments
+        if len(arguments) > 1:
+            commitMsg = ' '.join(arguments[1:]).strip('"')
+            returnCode, commitMsg = self._sanitizeArguments(
+                sender, commitMsg)
+        else:
+            commitMsg = "Autocommit using GitBot"
+
+        # we can safely ignore the case when the returnCode was != 0
+        # as an error message is sent my _sanitizeArguments
+        if returnCode == 0:
+            returnCode, commandPath = \
+                self._getGitRepositoryPath(sender, repository)
             if returnCode == 0:
-                returnCode, commandPath = \
-                    self._getGitRepositoryPath(sender, repository)
+                # execute git commit command and send result to sender
+                returnCode, result = \
+                    self.executeShellCommand(
+                        "git commit -a -m \"%s\"" % commitMsg,
+                        commandPath)
                 if returnCode == 0:
-                    self.printDebugMessage(sender, commitMsg)
-                    # execute git commit command and send result to sender
-                    returnCode, result = \
-                        self.executeShellCommand(
-                            "git commit -a -m \"%s\"" % commitMsg,
-                            commandPath)
-                    if returnCode == 0:
-                        self.sendMessage(sender, result)
-                    elif returnCode == 1:
-                        self.sendMessage(sender, "Nothing to commit")
+                    self.sendMessage(sender, result)
+                elif returnCode == 1:
+                    self.sendMessage(sender, "Nothing to commit")
 
     # handler for the 'git pull' command
     def handlePullCommand(self, sender, arguments):
