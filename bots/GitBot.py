@@ -403,3 +403,25 @@ class GitBot(GenericBot):
                     # branch change failed (e.g. if branch doesn't exist)
                     self.sendMessage(sender,
                         "Checking out branch '%s' failed" % branch)
+
+    # handler to list current local clones
+    def handleListCommand(self, sender, arguments):
+        """
+        list
+
+        List current local clones
+        """
+        directories = []
+
+        gitPath = self.configoptions["gitdir"]
+        if os.path.exists(gitPath):
+            for directory in os.listdir(gitPath):
+                pathDir = os.path.join(gitPath, directory)
+                if os.path.exists(os.path.join(pathDir, ".git")):
+                    directories.append(directory)
+
+            self.sendMessage(sender, "Git clones:")
+            self.sendMessage(sender, "\n".join(directories))
+        else:
+            self.sendMessage(sender,
+                "Git directory doesn’t exist")
