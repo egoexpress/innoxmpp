@@ -103,7 +103,8 @@ class GitBot(GenericBot):
         repository = None
 
         if len(arguments) == 0:
-            # no arguments provided, send help (using __doc__)
+            # no arguments provided, send help (using __doc__) if no
+            # default repository is set
             if self.defaultRepository == None:
                 self.sendMessage(sender,
                     "Usage: %s" % self._getDocForCurrentFunction())
@@ -127,7 +128,7 @@ class GitBot(GenericBot):
             commitMsg = "Autocommit using GitBot"
 
         # we can safely ignore the case when the returnCode was != 0
-        # as an error message is sent my _sanitizeArguments
+        # as an error message is sent by _sanitizeArguments
         if returnCode == 0:
             returnCode, commandPath = \
                 self._getGitRepositoryPath(sender, repository)
@@ -185,30 +186,40 @@ class GitBot(GenericBot):
     # handler for the 'git push' command
     def handlePushCommand(self, sender, arguments):
         """
-        push <repository>
+        push [<repository>]
 
         Push a given directory to its origin
         """
         if len(arguments) == 0:
-            # no arguments provided, send help (using __doc__)
-            self.sendMessage(sender,
-                "Usage: %s" % self._getDocForCurrentFunction())
-            self.logger.debug("No repository name for 'push' provided.")
+            if self.defaultRepository == None:
+                # no arguments provided and default repository not set
+                # send help (using __doc__)
+                self.sendMessage(sender,
+                    "Usage: %s" % self._getDocForCurrentFunction())
+                self.printDebugMessage("No repository name for 'push' provided.")
+                return 2
+            else:
+                repository = self.defaultRepository
+        elif len(arguments) == 1 and arguments[0] == "help":
+                self.sendMessage(sender,
+                    "Usage: %s" % self._getDocForCurrentFunction())
+                return 1            
         else:
             # arguments given, the first one is treated as the repository
             # all other arguments are ignored (for now)
             repository = arguments[0]
-            self.printDebugMessage(sender, "Trying to push repository '%s'" %
-                repository)
+            
+        self.printDebugMessage(sender, "Trying to push repository '%s'" %
+            repository)
 
-            returnCode, commandPath = self._getGitRepositoryPath(sender,
-                repository)
+        returnCode, commandPath = self._getGitRepositoryPath(sender,
+            repository)
+        if returnCode == 0:
+            # execute git push command and send result to sender
+            returnCode, result = self.executeShellCommand("git push",
+                commandPath)
             if returnCode == 0:
-                # execute git push command and send result to sender
-                returnCode, result = self.executeShellCommand("git push",
-                    commandPath)
-                if returnCode == 0:
-                    self.sendMessage(sender, result)
+                self.sendMessage(sender, result)
 
     # handler for the 'git clone' command
     def handleCloneCommand(self, sender, arguments):
@@ -221,10 +232,10 @@ class GitBot(GenericBot):
             # no arguments provided, send help (using __doc__)
             self.sendMessage(sender,
                 "Usage: %s" % self._getDocForCurrentFunction())
-            self.logger.debug("No URL for 'clone' provided.")
+            self.printDebugMessage("No URL for 'clone' provided.")
         else:
             # arguments given, the first one is treated as the URL
-            repository = arguments[0]
+            targetURL = arguments[0]
             if len(arguments) >= 2:
                 returnCode, localName = \
                     self._sanitizeArguments(sender, arguments[1])
@@ -234,7 +245,7 @@ class GitBot(GenericBot):
 
             if returnCode == 0:
                 self.printDebugMessage(sender, "Trying to clone from URL '%s'" %
-                    repository)
+                    targetURL)
 
                 commandPath = self.configoptions["gitdir"]
 
@@ -245,7 +256,7 @@ class GitBot(GenericBot):
 
                 # execute git clone command and send result to sender
                 returnCode, result = self.executeShellCommand(
-                    "git clone %s %s" % (repository, localName), commandPath)
+                    "git clone %s %s" % (targetURL, localName), commandPath)
                 if returnCode == 0:
                     self.sendMessage(sender, "%sCompleted successful!" % result)
                 elif returnCode == 128:
@@ -257,52 +268,64 @@ class GitBot(GenericBot):
     # handler for the 'git branch [-a]' command
     def handleBranchCommand(self, sender, arguments):
         """
-        branch <repository> [<branchname>]
+        branch [<repository>] [<branchname>]
 
         Create <branchname> in <repository> (or list branches for <repository>)
         """
+        branchname = None
+        
         if len(arguments) == 0:
-            # no arguments provided, send help (using __doc__)
-            self.sendMessage(sender,
-                "Usage: %s" % self._getDocForCurrentFunction())
-            self.logger.debug("No repository name for 'branch' provided.")
-
-        # at least one paramter given - check for repository
-        elif len(arguments) >= 1:
+            if self.defaultRepository == None:
+                # no arguments provided, send help (using __doc__)
+                self.sendMessage(sender,
+                    "Usage: %s" % self._getDocForCurrentFunction())
+                self.printDebugMessage("No repository name for 'branch' provided.")
+                return 2
+            else:
+                repository = self.defaultRepository
+        elif len(arguments) == 1:
+            if self.defaultRepository == None:
+                repository = arguments[0]
+            else:
+                repository = self.defaultRepository
+                branchname = arguments[0]
+        else:
             repository = arguments[0]
-            returnCode, commandPath = \
-                self._getGitRepositoryPath(sender, repository)
+            branchname = arguments[1]
 
-            self.logger.debug("Repository path: %s" % commandPath)
+        returnCode, commandPath = \
+            self._getGitRepositoryPath(sender, repository)
 
-            # repository name is valid
-            if returnCode == 0:
+        self.logger.debug("Repository path: %s" % commandPath)
 
-                # only one argument - list branches
-                if len(arguments) == 1:
+        # repository name is valid
+        if returnCode == 0:
 
+            # branch name is not set - only list branches
+            if branchname == None:
+
+                self.printDebugMessage(sender,
+                    "Listing branches of repository '%s'" % repository)
+
+                # execute git branch command and send result to sender
+                returnCode, result = self.executeShellCommand(
+                    "git branch -a", commandPath)
+            else:
+                # get new branch name
+                returnCode, branchname = self._sanitizeArguments(
+                sender, branchname)
+
+                if returnCode == 0:
                     self.printDebugMessage(sender,
-                        "Listing branches of repository '%s'" % repository)
+                        "Creating branch '%s' in repository '%s'" %
+                        (branchname, repository))
 
                     # execute git branch command and send result to sender
                     returnCode, result = self.executeShellCommand(
-                        "git branch -a", commandPath)
-                else:
-                    # get new branch name
-                    returnCode, branchname = self._sanitizeArguments(
-                    sender, arguments[1])
+                        "git branch %s", (commandPath, branchname))
 
-                    if returnCode == 0:
-                        self.printDebugMessage(sender,
-                            "Creating branch '%s' in repository '%s'" %
-                            (branchname, repository))
-
-                        # execute git branch command and send result to sender
-                        returnCode, result = self.executeShellCommand(
-                            "git branch %s", (commandPath, branchname))
-
-                if returnCode == 0:
-                    self.sendMessage(sender, result)
+            if returnCode == 0:
+                self.sendMessage(sender, result)
 
     # handler to set default repository
     def handleSetrepoCommand(self, sender, arguments):
@@ -353,7 +376,7 @@ class GitBot(GenericBot):
     # handler to change a branch in git using 'checkout'
     def handleCheckoutCommand(self, sender, arguments):
         """
-        checkout <repository> <branch>
+        checkout [<repository>] <branch>
 
         Checkout given branch in repository
         """
