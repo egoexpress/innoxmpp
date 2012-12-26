@@ -15,6 +15,7 @@ import subprocess           # run OS commands in a shell
 import os                   # perform OS operations (e.g. chdir)
 import inspect              # introspection (for generic 'help' function)
 import sys                  # get frame for function introspection
+import re                   # regexp processing
 
 from framework.ConfigOptions import ConfigOptions
 
@@ -55,6 +56,9 @@ class GenericBot(sleekxmpp.ClientXMPP):
             name="loglevel",
             value=logging.DEBUG,
             description="Default loglevel")
+            
+        # dict to store the regexp command handlers
+        self.regExpHandlers = {}
 
     def _cacheJIDs(self):
         """
@@ -130,12 +134,25 @@ class GenericBot(sleekxmpp.ClientXMPP):
 
         return 0, result
 
-    def getCommandHandlerName(self, command):
+    def getCommandHandlerName(self, arguments):
         """
         Get command handler name for passed command
         """
-        commandHandlerName = 'handle' + command.capitalize() + 'Command'
-        self.logger.debug("COMMAND HANDLER NAME: %s" % commandHandlerName)
+        commandHandlerName = None
+
+        # try to match regexps against command arguments
+        for regexp in self.regExpHandlers.keys():
+            if regexp.match(arguments.join(" ") != None:
+                commandHandlerName = self.regExpHandlers[regexp]
+                break
+                
+        if commandHandlerName == None:
+            # classic way to get commandHandler - use command passed as
+            # first argument and construct 'handle<command>Command' method
+            # name
+            command = arguments[0]
+            commandHandlerName = 'handle' + command.capitalize() + 'Command'
+        
         return commandHandlerName
 
     def _getDocForCurrentFunction(self):
@@ -211,7 +228,8 @@ class GenericBot(sleekxmpp.ClientXMPP):
         Handle debug message (send to sender and print on stdout)
         """
         self.logger.debug(text)
-        self.sendMessage(recipient, text)
+        if recipient != None:
+            self.sendMessage(recipient, text)
 
     def sendMessage(self, recipient, text):
         """
@@ -233,27 +251,24 @@ class GenericBot(sleekxmpp.ClientXMPP):
         Process incoming messages
         """
         if message['type'] in ('chat', 'normal', 'groupchat'):
-            # TODO: handle groupchat messages (do I need special handling here)
+            # TODO: handle groupchat messages (do I need special handling here?)
 
             # extract message body
             messageBody = message['body']
-            self.logger.debug('MESSAGE BODY: %s', messageBody)
 
             # get command and arguments from message
             messageParts = messageBody.split()
             command = messageParts[0]
 
             sender = message['from']
-            self.logger.debug('MESSAGE FROM: %s' % sender)
+            self.logger.debug('Received message from %s' % sender)
 
             arguments = []
             if len(messageParts) > 0:
                 arguments = messageParts[1:]
-            self.logger.debug('COMMAND: %s', command)
-            self.logger.debug('ARGUMENTS: %s', arguments)
 
-            # check if the command is valid at akk
-            commandHandlerName = self.getCommandHandlerName(command)
+            # check if the command is valid at all
+            commandHandlerName = self.getCommandHandlerName(messageParts)
             # try to get command handler using reflection
             try:
                 commandHandler = getattr(self, commandHandlerName)
@@ -269,6 +284,9 @@ class GenericBot(sleekxmpp.ClientXMPP):
             else:
                 # execute command handler if found
                 self.logger.debug("Valid command %s found, processing" % command)
+                
+                # TODO: check if we can reflect on the arguments of the function
+                # to determine what to pass to the command handler found
                 commandHandler(sender, arguments)
 
     # handle the (generic) 'help' command
@@ -296,3 +314,17 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # GenericBot) and all help strings on separate lines
         self.sendMessage(sender, "Help for %s\n\n%s" % (
             self.__module__.split(".")[1], "\n".join(docStrings)))
+            
+    def addRegExpCommandHandler(self, regexp, handler):
+        """
+        add alternative command handler which is executed when the given
+        regexp is matched
+        this works on a 'first-matched' base - so if there are 2 handlers
+        which would match a given message the first one is triggered
+        """
+        # TODO: compile regexp before storing 
+        try:
+            reComp = re.compile(regexp)
+            self.regExpHandlers[reComp] = handler
+        except:
+            self.logger.debug("regexp compiling and adding failed")

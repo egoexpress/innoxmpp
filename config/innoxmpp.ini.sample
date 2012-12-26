@@ -1,14 +1,27 @@
+[GenericBot]
+# XMPP id of the bot 
+jid=CHANGEME
+
+# XMPP password of the bot
+password=CHANGEME
+
 [BackupBot]
-# jid for the bot
+# XMPP id of the bot
+# default values from the GenericBot section can be overwritten in
+# each subsequent section (or can be provided at the command line)
 jid=CHANGEME
 
 # jabber password
 password=CHANGEME
 
-# logfile directory
+# -----------------------------------
+# special variables for the BackupBot
+# -----------------------------------
+
+# logfile directory where the bot should check for backup logfiles
 logdir=/var/log/duplicity
 
-# logfiles for backup destinations
+# logfiles for specific backup destinations are defined here
 logfiles=home.log srv.log
 
 [GitBot]
@@ -18,10 +31,10 @@ jid=CHANGEME
 # jabber password
 password=CHANGEME
 
-# target dir for git work
+# target dir for git work (e.g. where git clones should be placed)
 gitdir=/home/user/git
 
-# username at github.com (used for forks)
+# username at github.com (used for forks from GitHub)
 ghuser=egoexpress
 
 [LinuxBot]

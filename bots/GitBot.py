@@ -31,6 +31,9 @@ class GitBot(GenericBot):
             name="ghuser",
             value="CHANGEME",
             description="username for github.com")
+            
+        self.addRegExpCommandHandler("[(.*)].*pushed .+ new commit? to (.*)",
+            handleGitHubPushMessage)
 
         # default repository when no parameter for repository
         # operations is provided
@@ -92,6 +95,13 @@ class GitBot(GenericBot):
             return 0, commandPath
 
         return returnCode, ""
+
+    def handleGitHubPushMessage(self, sender, repository, branch):
+        """
+        handle push message command from GitHub
+        perform pull on given repository
+        """"
+        self.handlePullCommand(None, [repository,])
 
     # handler for the 'git commit -a [-m <message>]' command
     def handleCommitCommand(self, sender, arguments):
