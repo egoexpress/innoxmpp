@@ -56,7 +56,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
             name="loglevel",
             value=logging.DEBUG,
             description="Default loglevel")
-            
+
         # dict to store the regexp command handlers
         self.regExpHandlers = {}
 
@@ -142,17 +142,17 @@ class GenericBot(sleekxmpp.ClientXMPP):
 
         # try to match regexps against command arguments
         for regexp in self.regExpHandlers.keys():
-            if regexp.match(arguments.join(" ") != None:
+            if regexp.match(arguments.join(" ")) != None:
                 commandHandlerName = self.regExpHandlers[regexp]
                 break
-                
+
         if commandHandlerName == None:
             # classic way to get commandHandler - use command passed as
             # first argument and construct 'handle<command>Command' method
             # name
             command = arguments[0]
             commandHandlerName = 'handle' + command.capitalize() + 'Command'
-        
+
         return commandHandlerName
 
     def _getDocForCurrentFunction(self):
@@ -284,7 +284,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
             else:
                 # execute command handler if found
                 self.logger.debug("Valid command %s found, processing" % command)
-                
+
                 # TODO: check if we can reflect on the arguments of the function
                 # to determine what to pass to the command handler found
                 commandHandler(sender, arguments)
@@ -314,7 +314,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # GenericBot) and all help strings on separate lines
         self.sendMessage(sender, "Help for %s\n\n%s" % (
             self.__module__.split(".")[1], "\n".join(docStrings)))
-            
+
     def addRegExpCommandHandler(self, regexp, handler):
         """
         add alternative command handler which is executed when the given
@@ -322,7 +322,7 @@ class GenericBot(sleekxmpp.ClientXMPP):
         this works on a 'first-matched' base - so if there are 2 handlers
         which would match a given message the first one is triggered
         """
-        # TODO: compile regexp before storing 
+        # TODO: compile regexp before storing
         try:
             reComp = re.compile(regexp)
             self.regExpHandlers[reComp] = handler

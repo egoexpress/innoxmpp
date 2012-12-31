@@ -31,9 +31,9 @@ class GitBot(GenericBot):
             name="ghuser",
             value="CHANGEME",
             description="username for github.com")
-            
+
         self.addRegExpCommandHandler("[(.*)].*pushed .+ new commit? to (.*)",
-            handleGitHubPushMessage)
+            self.handleGitHubPushMessage)
 
         # default repository when no parameter for repository
         # operations is provided
@@ -100,8 +100,8 @@ class GitBot(GenericBot):
         """
         handle push message command from GitHub
         perform pull on given repository
-        """"
-        self.handlePullCommand(None, [repository,])
+        """
+        self.handlePullCommand(None, [repository, ])
 
     # handler for the 'git commit -a [-m <message>]' command
     def handleCommitCommand(self, sender, arguments):
@@ -213,12 +213,12 @@ class GitBot(GenericBot):
         elif len(arguments) == 1 and arguments[0] == "help":
                 self.sendMessage(sender,
                     "Usage: %s" % self._getDocForCurrentFunction())
-                return 1            
+                return 1
         else:
             # arguments given, the first one is treated as the repository
             # all other arguments are ignored (for now)
             repository = arguments[0]
-            
+
         self.printDebugMessage(sender, "Trying to push repository '%s'" %
             repository)
 
@@ -283,7 +283,7 @@ class GitBot(GenericBot):
         Create <branchname> in <repository> (or list branches for <repository>)
         """
         branchname = None
-        
+
         if len(arguments) == 0:
             if self.defaultRepository == None:
                 # no arguments provided, send help (using __doc__)
