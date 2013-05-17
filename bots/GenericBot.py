@@ -101,10 +101,10 @@ class GenericBot(sleekxmpp.ClientXMPP):
         # or send messages to us (ejabberd doesn't care)
         try:
             self.get_roster()
-        except sleekxmpp.IQTimeout:
+        except sleekxmpp.exceptions.IqTimeout:
             self.logger.info("Timeout while getting roster")
             # TODO: handle further timeout issues
-        except sleekxmpp.IQError:
+        except sleekxmpp.exceptions.IqError:
             self.logger.info("Bad data received while retrieving roster")
             # TODO: handle further error issues
 
