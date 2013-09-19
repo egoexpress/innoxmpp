@@ -18,14 +18,15 @@ Further bots and actions will be added in the future if some missing function sc
 **Requirements**
 
 * [Python](http://www.python.org) >= 3.2.3 (Python2 is not supported, get over it)
-* [SleekXMPP](http://sleekxmpp.com/)
+* [SleekXMPP](http://sleekxmpp.com/) >= 1.1 (development version, 1.0 will not work)
 * [DNSPython3](http://www.dnspython.com/)
 
-**Using Packages**
+**Issues**
 
-The development was done with the Git versions of both SleekXMPP and DNSPython3.
-Tests on Debian Sid (as of Sep 6th 2012) showed that the current packaged version
-of SleekXMPP (python3-sleekxmpp: 1.0~beta5-2) throws an error when starting a bot.
+The development was done with the dev versions of both SleekXMPP and DNSPython3.
+Using SleekXMPP 1.0 (current stable version as of Sep 2013) throws an error when starting a bot.
+This is caused by an API change not present in SleekXMPP 1.0. There is a quick fix to
+get the bot up and running, but there will be further errors!
 
     DEBUG     ==== TRANSITION disconnected -> connected
     Traceback (most recent call last):
@@ -37,7 +38,8 @@ of SleekXMPP (python3-sleekxmpp: 1.0~beta5-2) throws an error when starting a bo
         return XMLStream.process(self, *args, **kwargs)
     TypeError: process() got an unexpected keyword argument 'block'
 
-Using the latest version from the (cloned) [Git repository](https://github.com/egoexpress/SleekXMPP) didn't show this behaviour.
+Using the latest version from the (cloned) [Git repository](https://github.com/egoexpress/SleekXMPP) doesn't show this 
+behaviour. As an alternative you can download the [development tarball](http://github.com/fritzy/SleekXMPP/zipball/develop) from the SleekXMPP homepage.
 
 **Getting the code**
 
